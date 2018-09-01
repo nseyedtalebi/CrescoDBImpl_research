@@ -1,24 +1,37 @@
+import jpastuff.PersistenceUnitInfoBuilder;
 import org.junit.jupiter.api.*;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 import java.io.IOException;
+import java.net.URI;
+import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Properties;
 import java.util.stream.Stream;
 import java.io.File;
+import javax.persistence.EntityManagerFactory;
+import javax.persistence.spi.PersistenceProvider;
+import javax.persistence.spi.PersistenceUnitInfo;
+import javax.persistence.spi.ProviderUtil;
+import javax.sql.DataSource;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
 import org.junit.jupiter.api.extension.ParameterResolutionException;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
+
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-@Tags({@Tag("constructors"),@Tag("unit")})
-public class CoreDBImplTest_constructors {
+@Tags({@Tag("unit")})
+public class CoreDBImplTest {
     /*TODO:Eventually, these should be put into the main cresco controller with
      a JUnit 5 @Tag for integration testing. Same for other integration tests.
      That way they're part of the larger project without having to be run during
@@ -31,11 +44,7 @@ public class CoreDBImplTest_constructors {
     providers
      */
 
-    Stream<String> getJPAProviderClasses(){
-        return Stream.of("org.hibernate.jpa.HibernatePersistenceProvider"
-        ,"org.eclipse.persistence.jpa.PersistenceProvider"
-        ,"org.datanucleus.api.jpa.PersistenceProviderImpl");
-    }
+
 
     /*@TestFactory
     Stream<DynamicTest> checkPersistenceXML() throws ParserConfigurationException, IOException, SAXException {
@@ -52,8 +61,4 @@ public class CoreDBImplTest_constructors {
         );
     }*/
 
-
-
-
-
-}
+    }

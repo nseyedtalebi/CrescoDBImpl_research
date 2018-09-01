@@ -10,7 +10,7 @@ import javax.sql.DataSource;
 import java.net.URL;
 import java.util.List;
 import java.util.Properties;
-
+//This is an example found at https://vladmihalcea.com/how-to-bootstrap-jpa-programmatically-without-the-persistence-xml-configuration-file/
 public class PersistenceUnitInfoImpl implements PersistenceUnitInfo {
     public static final String JPA_VERSION = "2.2";
     private String persistenceUnitName
@@ -132,11 +132,11 @@ public class PersistenceUnitInfoImpl implements PersistenceUnitInfo {
 
     @Override
     public void addTransformer(ClassTransformer classTransformer) {
-        throw new NotImplementedException();
+        //Do nothing. Not sure if this method is relevant outside of an Java EE container
     }
 
     @Override
     public ClassLoader getNewTempClassLoader() {
-        throw new NotImplementedException();
+        return null;
     }
 }

@@ -1,10 +1,15 @@
 package jpastuff;
 
+import sun.misc.Resource;
+
 import javax.persistence.SharedCacheMode;
 import javax.persistence.ValidationMode;
 import javax.persistence.spi.PersistenceUnitTransactionType;
 import javax.sql.DataSource;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 
@@ -12,25 +17,19 @@ public class PersistenceUnitInfoBuilder {
     private String persistenceUnitName
             ,persistenceProviderClassName;
     private PersistenceUnitTransactionType persistenceUnitTransactionType = PersistenceUnitTransactionType.RESOURCE_LOCAL;
-    DataSource jtaDataSource
-            ,nonJtaDataSource;
-    private List<String> mappingFileNames
-            ,managedClassNames;
-    private List<URL> jarFileUrls;
+    DataSource jtaDataSource, nonJtaDataSource;
+    private List<String> mappingFileNames = new ArrayList<>();
+    private List<String> managedClassNames = new ArrayList<>();
+    private List<URL> jarFileUrls = new ArrayList<>();
     private SharedCacheMode sharedCacheMode = SharedCacheMode.UNSPECIFIED;
     private ValidationMode validationMode = ValidationMode.AUTO;
-    private Properties properties;
+    private Properties properties = new Properties();
     private boolean excludeUnlistedClasses = false;
-    private URL persistenceUnitRootUrl;
+    private URL persistenceUnitRootUrl = ClassLoader.getSystemClassLoader().getResource(".");
 
-    public PersistenceUnitInfoBuilder setPersistenceUnitName(String persistenceUnitName) {
+    public PersistenceUnitInfoBuilder(String persistenceUnitName,String persistenceProviderClassName){
         this.persistenceUnitName = persistenceUnitName;
-        return this;
-    }
-
-    public PersistenceUnitInfoBuilder setPersistenceProviderClassName(String persistenceProviderClassName) {
         this.persistenceProviderClassName = persistenceProviderClassName;
-        return this;
     }
 
     public PersistenceUnitInfoBuilder setPersistenceUnitTransactionType(PersistenceUnitTransactionType persistenceUnitTransactionType) {
@@ -83,6 +82,11 @@ public class PersistenceUnitInfoBuilder {
         return this;
     }
 
+    public PersistenceUnitInfoBuilder setPersistenceUnitRootUrl(URL theURL){
+        this.persistenceUnitRootUrl = theURL;
+        return this;
+    }
+
     public PersistenceUnitInfoImpl build() {
         return new PersistenceUnitInfoImpl(persistenceUnitName
                 ,persistenceProviderClassName
@@ -98,10 +102,5 @@ public class PersistenceUnitInfoBuilder {
                 ,excludeUnlistedClasses
                 ,persistenceUnitRootUrl
                  );
-    }
-    public class NotEnoughOptionsConfiguredException extends Exception{
-        public NotEnoughOptionsConfiguredException(String message) {
-            super(message);
-        }
     }
 }

@@ -1,14 +1,20 @@
 package jpastuff;
 import org.junit.jupiter.api.*;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.Mock;
 
+import javax.persistence.EntityManagerFactory;
 import javax.persistence.SharedCacheMode;
 import javax.persistence.ValidationMode;
+import javax.persistence.spi.PersistenceProvider;
 import javax.persistence.spi.PersistenceUnitInfo;
 import javax.persistence.spi.PersistenceUnitTransactionType;
 import javax.sql.DataSource;
 import java.lang.reflect.Executable;
 import java.lang.reflect.Method;
+import java.net.MalformedURLException;
+import java.net.URI;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.List;
@@ -22,24 +28,6 @@ import static org.mockito.Mockito.*;
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @Tags({@Tag("jpastuff"),@Tag("unit")})
 public class PersistenceUnitInfoImplTest {
-
-    /*private static DynamicTest createBuilderMethodTest(Method method){
-        String displayName = "Check "+method.getName();
-        return DynamicTest.dynamicTest(displayName,()->method.)
-    }
-    @TestFactory
-    public Stream<DynamicTest> testBuilderMethods() {
-    List methodNames = Arrays.asList(new String[]{"PersistenceUnitName","PersistenceProviderClassName"
-            ,"PersistenceUnitTransactionType","JtaDataSource"
-            ,"NonJtaDataSource","MappingFileNames","ManagedClassNames"
-            ,"SharedCacheMode","ValidationMode","Properties"
-            ,"GetJarFileUrls"
-        });
-        Stream<Method> methods = Arrays.asList(PersistenceUnitInfoBuilder.class.getMethods()).stream();
-        methods.filter( (method)->methodNames.contains("set"+method.getName()))
-                .map( (method) -> DynamicTest.dynamicTest("Check "+method.getName()));
-    }
-    */
 
     /*Writing lot of boilerplate code by hand irritates the piss out of me so I
     spent that time writing a snippet of Python to handle the necessary but very
@@ -59,25 +47,28 @@ public class PersistenceUnitInfoImplTest {
          print(case)
 
      */
+    private PersistenceUnitInfoBuilder mybuilder;
+
+    @BeforeEach
+    public void before_each(){
+        mybuilder =new PersistenceUnitInfoBuilder("test","test.class.name");
+    }
+
     @Test
     public void setPersistenceUnitName_test(){
-        PersistenceUnitInfoBuilder mybuilder = new PersistenceUnitInfoBuilder();
-        mybuilder.setPersistenceUnitName("test");
         PersistenceUnitInfoImpl myimpl = mybuilder.build();
         assertEquals("test",myimpl.getPersistenceUnitName());
     }
 
     @Test
     public void setPersistenceProviderClassName_test(){
-        PersistenceUnitInfoBuilder mybuilder = new PersistenceUnitInfoBuilder();
-        mybuilder.setPersistenceProviderClassName("test.class.name");
         PersistenceUnitInfoImpl myimpl = mybuilder.build();
         assertEquals("test.class.name",myimpl.getPersistenceProviderClassName());
     }
 
     @Test
     public void setPersistenceUnitTransactionType_test(){
-        PersistenceUnitInfoBuilder mybuilder = new PersistenceUnitInfoBuilder();
+
         mybuilder.setPersistenceUnitTransactionType(PersistenceUnitTransactionType.RESOURCE_LOCAL);
         PersistenceUnitInfoImpl myimpl = mybuilder.build();
         assertEquals(PersistenceUnitTransactionType.RESOURCE_LOCAL,myimpl.getTransactionType());
@@ -85,7 +76,7 @@ public class PersistenceUnitInfoImplTest {
 
     @Test
     public void setJtaDataSource_test(){
-        PersistenceUnitInfoBuilder mybuilder = new PersistenceUnitInfoBuilder();
+
         DataSource mockds = mock(DataSource.class);
         mybuilder.setJtaDataSource(mockds);
         PersistenceUnitInfoImpl myimpl = mybuilder.build();
@@ -94,7 +85,7 @@ public class PersistenceUnitInfoImplTest {
 
     @Test
     public void setNonJtaDataSource_test(){
-        PersistenceUnitInfoBuilder mybuilder = new PersistenceUnitInfoBuilder();
+
         DataSource nonjta = mock(DataSource.class);
         mybuilder.setNonJtaDataSource(nonjta);
         PersistenceUnitInfoImpl myimpl = mybuilder.build();
@@ -103,7 +94,7 @@ public class PersistenceUnitInfoImplTest {
 
     @Test
     public void setMappingFileNames_test(){
-        PersistenceUnitInfoBuilder mybuilder = new PersistenceUnitInfoBuilder();
+
         List mappingFileNames = mock(List.class);
         mybuilder.setMappingFileNames(mappingFileNames);
         PersistenceUnitInfoImpl myimpl = mybuilder.build();
@@ -112,7 +103,7 @@ public class PersistenceUnitInfoImplTest {
 
     @Test
     public void setManagedClassNames_test(){
-        PersistenceUnitInfoBuilder mybuilder = new PersistenceUnitInfoBuilder();
+
         List managedClassNames = mock(List.class);
         mybuilder.setManagedClassNames(managedClassNames);
         PersistenceUnitInfoImpl myimpl = mybuilder.build();
@@ -121,7 +112,7 @@ public class PersistenceUnitInfoImplTest {
 
     @Test
     public void setSharedCacheMode_test(){
-        PersistenceUnitInfoBuilder mybuilder = new PersistenceUnitInfoBuilder();
+
         SharedCacheMode m = SharedCacheMode.UNSPECIFIED;
         mybuilder.setSharedCacheMode(m);
         PersistenceUnitInfoImpl myimpl = mybuilder.build();
@@ -130,7 +121,7 @@ public class PersistenceUnitInfoImplTest {
 
     @Test
     public void setValidationMode_test(){
-        PersistenceUnitInfoBuilder mybuilder = new PersistenceUnitInfoBuilder();
+
         ValidationMode m = ValidationMode.AUTO;
         mybuilder.setValidationMode(m);
         PersistenceUnitInfoImpl myimpl = mybuilder.build();
@@ -139,7 +130,7 @@ public class PersistenceUnitInfoImplTest {
 
     @Test
     public void setProperties_test(){
-        PersistenceUnitInfoBuilder mybuilder = new PersistenceUnitInfoBuilder();
+
         Properties p = mock(Properties.class);
         mybuilder.setProperties(p);
         PersistenceUnitInfoImpl myimpl = mybuilder.build();
@@ -148,7 +139,7 @@ public class PersistenceUnitInfoImplTest {
 
     @Test
     public void setJarFileUrls_test(){
-        PersistenceUnitInfoBuilder mybuilder = new PersistenceUnitInfoBuilder();
+
         List l = mock(List.class);
         mybuilder.setJarFileUrls(l);
         PersistenceUnitInfoImpl myimpl = mybuilder.build();
@@ -156,25 +147,59 @@ public class PersistenceUnitInfoImplTest {
     }
 
     @Test
-    public void build_checkForRequired(){
-        PersistenceUnitInfoBuilder mybuilder = new PersistenceUnitInfoBuilder();
-        DataSource mockds = mock(DataSource.class);
-        mybuilder.setPersistenceUnitName("test")
-                 .setPersistenceProviderClassName("test.class")
-                 .setNonJtaDataSource(mockds);
-        assertDoesNotThrow(mybuilder::build);
+    public void setPersistenceUnitRootUrl() throws MalformedURLException {
+
+        URL fakeurl = URI.create("file://url").toURL();
+        mybuilder.setPersistenceUnitRootUrl(fakeurl);
+        PersistenceUnitInfoImpl myimpl = mybuilder.build();
+        assertEquals(fakeurl,myimpl.getPersistenceUnitRootUrl());
     }
 
-    //TODO:Figure out minimal set of options for persistence context info
-    //then modify build() method to enforce this minimum.
-    @Test
-    public void build_checkForRequired_notEnoughArgs(){
-        PersistenceUnitInfoBuilder mybuilder = new PersistenceUnitInfoBuilder();
-        DataSource mockds = mock(DataSource.class);
-        mybuilder.setPersistenceUnitName("test")
-                .setPersistenceProviderClassName("test.class");
-        assertThrows(PersistenceUnitInfoBuilder.NotEnoughOptionsConfiguredException.class
-        ,mybuilder::build);
+    Stream<String> getJPAProviderClasses(){
+        return Stream.of("org.hibernate.jpa.HibernatePersistenceProvider"
+                ,"org.eclipse.persistence.jpa.PersistenceProvider"
+                ,"org.datanucleus.api.jpa.PersistenceProviderImpl");
     }
+
+    @ParameterizedTest
+    @MethodSource("getJPAProviderClasses")
+    public void getEntityManagerFactory(String providerClass) throws Exception {
+        /*Properties jpaProps = new Properties();
+        jpaProps.put("javax.persistence.jdbc.driver","test");
+        jpaProps.put("javax.persistence.jdbc.url","test");
+        jpaProps.put("javax.persistence.jdbc.user","test");
+        jpaProps.put("javax.persistence.jdbc.password","test");*/
+        PersistenceUnitInfoBuilder puBuilder =
+                new PersistenceUnitInfoBuilder("test.persistence.unit"
+                        ,providerClass);
+
+        PersistenceUnitInfo puinfo = puBuilder.build();
+        PersistenceProvider provider = (PersistenceProvider)Class.forName(providerClass).newInstance();
+        /*
+        What follows is probably bad, but I didn't know any other way to do it.
+        I wanted to check that the respective JPA providers would load enough to
+        report why they can't proceed instead of throwing a NullPointerException
+        or something else generic. So I needed a way to say, "Make sure it doesn't
+        throw any unexpected exceptions."
+         */
+        assertDoesNotThrow(() -> {
+                    try {
+                        EntityManagerFactory emf = provider.createContainerEntityManagerFactory(puinfo, null);
+                    } catch (org.hibernate.HibernateException ex) {
+                        System.out.println("Squashed exception from Hibernate. This is expected, see comments in source for details");
+                    } catch (org.datanucleus.exceptions.NucleusException ex) {
+                        System.out.println("Squashed exception from DataNucleus. This is expected, see comments in source for details");
+                    } catch (org.eclipse.persistence.exceptions.EclipseLinkException ex) {
+                        System.out.println("Squashed exception from EclipseLink. This is expected, see comments in source for details");
+                    }
+                }
+        );
+
+    }
+
+
+
+
+
 
 }
