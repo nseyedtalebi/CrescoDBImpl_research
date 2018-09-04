@@ -16,7 +16,8 @@ import java.util.Properties;
 public class PersistenceUnitInfoBuilder {
     private String persistenceUnitName
             ,persistenceProviderClassName;
-    private PersistenceUnitTransactionType persistenceUnitTransactionType = PersistenceUnitTransactionType.RESOURCE_LOCAL;
+    private PersistenceUnitTransactionType persistenceUnitTransactionType =
+            PersistenceUnitTransactionType.RESOURCE_LOCAL;
     DataSource jtaDataSource, nonJtaDataSource;
     private List<String> mappingFileNames = new ArrayList<>();
     private List<String> managedClassNames = new ArrayList<>();
@@ -27,23 +28,29 @@ public class PersistenceUnitInfoBuilder {
     private boolean excludeUnlistedClasses = false;
     private URL persistenceUnitRootUrl = ClassLoader.getSystemClassLoader().getResource(".");
 
-    public PersistenceUnitInfoBuilder(String persistenceUnitName,String persistenceProviderClassName){
+    public PersistenceUnitInfoBuilder(String persistenceUnitName,
+                                      String persistenceProviderClassName){
         this.persistenceUnitName = persistenceUnitName;
         this.persistenceProviderClassName = persistenceProviderClassName;
     }
 
-    public PersistenceUnitInfoBuilder setPersistenceUnitTransactionType(PersistenceUnitTransactionType persistenceUnitTransactionType) {
+    public PersistenceUnitInfoBuilder setPersistenceUnitTransactionType(
+            PersistenceUnitTransactionType persistenceUnitTransactionType) {
         this.persistenceUnitTransactionType = persistenceUnitTransactionType;
         return this;
     }
 
     public PersistenceUnitInfoBuilder setJtaDataSource(DataSource jtaDataSource) {
         this.jtaDataSource = jtaDataSource;
+        this.nonJtaDataSource = null;
+        this.persistenceUnitTransactionType = PersistenceUnitTransactionType.JTA;
         return this;
     }
 
     public PersistenceUnitInfoBuilder setNonJtaDataSource(DataSource nonJtaDataSource) {
         this.nonJtaDataSource = nonJtaDataSource;
+        this.jtaDataSource = null;
+        this.persistenceUnitTransactionType = PersistenceUnitTransactionType.RESOURCE_LOCAL;
         return this;
     }
 
@@ -88,6 +95,16 @@ public class PersistenceUnitInfoBuilder {
     }
 
     public PersistenceUnitInfoImpl build() {
+        if(this.jtaDataSource != null && this.nonJtaDataSource != null){
+            throw new IllegalArgumentException("Cannot specify jtaDataSource and nonJtaDataSource"+
+                    "for persistence unit %s".format(this.persistenceUnitName));
+        }
+        if(this.persistenceUnitTransactionType == PersistenceUnitTransactionType.RESOURCE_LOCAL && this.jtaDataSource != null){
+            throw new IllegalArgumentException("Cannot specify transaction type 'RESOURCE_LOCAL' with a JTA DataSource");
+        }
+        if(this.persistenceUnitTransactionType == PersistenceUnitTransactionType.JTA && this.nonJtaDataSource != null){
+            throw new IllegalArgumentException("Cannot specify transaction type 'JTA' with non-JTA DataSource");
+        }
         return new PersistenceUnitInfoImpl(persistenceUnitName
                 ,persistenceProviderClassName
                 ,persistenceUnitTransactionType

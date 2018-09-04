@@ -1,5 +1,7 @@
 package jpastuff;
+import org.eclipse.persistence.internal.jpa.config.persistenceunit.PersistenceUnitImpl;
 import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.function.Executable;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.Mock;
@@ -11,11 +13,11 @@ import javax.persistence.spi.PersistenceProvider;
 import javax.persistence.spi.PersistenceUnitInfo;
 import javax.persistence.spi.PersistenceUnitTransactionType;
 import javax.sql.DataSource;
-import java.lang.reflect.Executable;
 import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
@@ -81,6 +83,8 @@ public class PersistenceUnitInfoImplTest {
         mybuilder.setJtaDataSource(mockds);
         PersistenceUnitInfoImpl myimpl = mybuilder.build();
         assertEquals(mockds,myimpl.getJtaDataSource());
+        assertNull(myimpl.nonJtaDataSource);
+        assertEquals(myimpl.getTransactionType(),PersistenceUnitTransactionType.JTA);
     }
 
     @Test
@@ -90,6 +94,8 @@ public class PersistenceUnitInfoImplTest {
         mybuilder.setNonJtaDataSource(nonjta);
         PersistenceUnitInfoImpl myimpl = mybuilder.build();
         assertEquals(nonjta,myimpl.getNonJtaDataSource());
+        assertNull(myimpl.jtaDataSource);
+        assertEquals(myimpl.getTransactionType(),PersistenceUnitTransactionType.RESOURCE_LOCAL);
     }
 
     @Test
@@ -161,6 +167,22 @@ public class PersistenceUnitInfoImplTest {
                 ,"org.datanucleus.api.jpa.PersistenceProviderImpl");
     }
 
+    @TestFactory
+    public Stream<DynamicTest> checkForInvalidArgCombinations(){
+        List<DynamicTest> tests = new ArrayList<>();
+        DataSource mockds = mock(DataSource.class);
+        mybuilder = mybuilder.setJtaDataSource(mockds)
+                .setPersistenceUnitTransactionType(PersistenceUnitTransactionType.RESOURCE_LOCAL);
+        tests.add(DynamicTest.dynamicTest("JTA DataSource and resource local trans"
+                ,()->assertThrows(IllegalArgumentException.class, () -> mybuilder.build())));
+
+        mybuilder = mybuilder.setNonJtaDataSource(mockds)
+                .setPersistenceUnitTransactionType(PersistenceUnitTransactionType.JTA);
+        tests.add(DynamicTest.dynamicTest("Non-JTA DataSource and JTA trans"
+        ,()->assertThrows(IllegalArgumentException.class,()->mybuilder.build())));
+        return tests.stream();
+    }
+
     @ParameterizedTest
     @MethodSource("getJPAProviderClasses")
     public void getEntityManagerFactory(String providerClass) throws Exception {
@@ -169,17 +191,19 @@ public class PersistenceUnitInfoImplTest {
         jpaProps.put("javax.persistence.jdbc.url","test");
         jpaProps.put("javax.persistence.jdbc.user","test");
         jpaProps.put("javax.persistence.jdbc.password","test");*/
-        PersistenceUnitInfoBuilder puBuilder =
+        /*PersistenceUnitInfoBuilder puBuilder =
                 new PersistenceUnitInfoBuilder("test.persistence.unit"
-                        ,providerClass);
+                        ,providerClass);*/
 
-        PersistenceUnitInfo puinfo = puBuilder.build();
+        PersistenceUnitInfo puinfo = mybuilder.build();
         PersistenceProvider provider = (PersistenceProvider)Class.forName(providerClass).newInstance();
         /*
         What follows is probably bad, but I didn't know any other way to do it.
         I wanted to check that the respective JPA providers would load enough to
         report why they can't proceed instead of throwing a NullPointerException
-        or something else generic. So I needed a way to say, "Make sure it doesn't
+        or something else generic. Setting up connections to data sources looks
+        different enough that I won't try to do it ahead of time (end user will
+        have to do it herself). So I needed a way to say, "Make sure it doesn't
         throw any unexpected exceptions."
          */
         assertDoesNotThrow(() -> {
