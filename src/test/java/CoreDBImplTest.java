@@ -32,20 +32,17 @@ import org.xml.sax.SAXException;
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @Tags({@Tag("unit")})
 public class CoreDBImplTest {
-    /*TODO:Eventually, these should be put into the main cresco controller with
+    /*Eventually, these should be put into the main cresco controller with
      a JUnit 5 @Tag for integration testing. Same for other integration tests.
      That way they're part of the larger project without having to be run during
      every build of every piece. Travis can probably help with this so the integration
      tests are only run when they need to be
      */
 
-    /*Todo:Finish unittest for constructors, then write integration tests in
+    /*Finish unittest for constructors, then write integration tests in
     such a way that we can run the whole suite of them for different backend
     providers
      */
-
-
-
     /*@TestFactory
     Stream<DynamicTest> checkPersistenceXML() throws ParserConfigurationException, IOException, SAXException {
         ClassLoader classLoader = getClass().getClassLoader();
@@ -60,5 +57,11 @@ public class CoreDBImplTest {
                 ,DynamicTest.dynamicTest("Check default persistence node name",()->assertEquals(persistenceUnitNodes.item(0).getAttributes().getNamedItem("name").getNodeValue(),CoreDBImpl.DEFAULT_PERSISTENCE_UNIT_NAME))
         );
     }*/
-
+    @Test
+    public void constructor_throwsClassNotFound(){
+        PersistenceUnitInfo puInfo = new PersistenceUnitInfoBuilder("test_pu","does.not.exist").build();
+        assertThrows(ClassNotFoundException.class,()-> new CoreDBImpl(puInfo,null,null));
     }
+    //TODO:Continue writing unit tests for constructor. Prob need one for each kind of exception thrown, plus something to verify every non-trivial thing.
+
+}
