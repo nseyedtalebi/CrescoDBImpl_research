@@ -1,3 +1,4 @@
+import io.cresco.library.utilities.CLogger;
 import jpastuff.PersistenceUnitInfoBuilder;
 import org.junit.jupiter.api.*;
 
@@ -10,6 +11,7 @@ import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
+import java.util.logging.Level;
 import java.util.stream.Stream;
 import java.io.File;
 import javax.persistence.EntityManagerFactory;
@@ -57,11 +59,46 @@ public class CoreDBImplTest {
                 ,DynamicTest.dynamicTest("Check default persistence node name",()->assertEquals(persistenceUnitNodes.item(0).getAttributes().getNamedItem("name").getNodeValue(),CoreDBImpl.DEFAULT_PERSISTENCE_UNIT_NAME))
         );
     }*/
+    protected PersistenceUnitInfo puInfo;
+
+    @BeforeEach
+    public void setPuInfo(){
+        this.puInfo = new PersistenceUnitInfoBuilder("test_pu","org.datanucleus.api.jpa.PersistenceProviderImpl").build();
+    }
+
     @Test
     public void constructor_throwsClassNotFound(){
         PersistenceUnitInfo puInfo = new PersistenceUnitInfoBuilder("test_pu","does.not.exist").build();
         assertThrows(ClassNotFoundException.class,()-> new CoreDBImpl(puInfo,null,null));
     }
-    //TODO:Continue writing unit tests for constructor. Prob need one for each kind of exception thrown, plus something to verify every non-trivial thing.
 
-}
+    @Test//Try to instantiate an interface to produce this exception
+    public void constructor_throwsInstantiationException(){
+        PersistenceUnitInfo puInfo = new PersistenceUnitInfoBuilder("test_pu","javax.persistence.spi.PersistenceProvider").build();
+        assertThrows(InstantiationException.class,()-> new CoreDBImpl(puInfo,null,null));
+    }
+
+    /*I had a hard time finding an example class that would cause the IllegalAccess instead
+    of the other ones so I just created my own DummyClass with private constructor to do the
+    trick
+     */
+    @Test
+    public void constructor_throwsIllegalAccess(){
+        PersistenceUnitInfo puInfo = new PersistenceUnitInfoBuilder("test_pu","DummyClass").build();
+        assertThrows(IllegalAccessException.class,()-> new CoreDBImpl(puInfo,null,null));
+    }
+
+    //TODO:This test doesn't work at the moment
+    @TestFactory
+    public Stream<DynamicTest> constructor_setInstanceVars() throws Exception /*Hooray for checked exceptions?*/ {
+        CoreDBImpl myimpl = spy(CoreDBImpl.class);
+
+        return Stream.of(
+            DynamicTest.dynamicTest("logger",()->assertDoesNotThrow(()->myimpl.logger.error("This should not throw any exceptions"))),
+            DynamicTest.dynamicTest("persistence unit name",()->assertEquals(puInfo.getPersistenceUnitName(),myimpl.persistenceUnitName)),
+            DynamicTest.dynamicTest("persistence unit properties",()->assertEquals(puInfo.getProperties(),myimpl.persistenceUnitProperties)),
+            DynamicTest.dynamicTest("provider class name",()->assertEquals(puInfo.getPersistenceProviderClassName(),myimpl.provider.getClass().getName()))
+        );
+    }
+
+ }
