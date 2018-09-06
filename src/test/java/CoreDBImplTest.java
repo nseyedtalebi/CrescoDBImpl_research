@@ -91,7 +91,7 @@ public class CoreDBImplTest {
     //TODO:This test doesn't work at the moment
     @TestFactory
     public Stream<DynamicTest> constructor_setInstanceVars() throws Exception /*Hooray for checked exceptions?*/ {
-        CoreDBImpl myimpl = spy(CoreDBImpl.class);
+        CoreDBImpl myimpl = mock(CoreDBImpl.class);
 
         return Stream.of(
             DynamicTest.dynamicTest("logger",()->assertDoesNotThrow(()->myimpl.logger.error("This should not throw any exceptions"))),
