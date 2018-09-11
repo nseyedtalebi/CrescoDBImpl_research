@@ -8,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 import static org.mockito.MockitoAnnotations.*;
 
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 
@@ -30,31 +31,33 @@ import org.junit.jupiter.params.provider.MethodSource;
 @Tags({@Tag("unit")})
 public class CoreDBImplTest {
     //protected PersistenceUnitInfo puInfo;
-    protected Map propertyMap = new HashMap<>();
+    private Map propertyMap = new HashMap<>();
 
     /*Init mocks*/
     //@Mock
     //protected CoreDBImpl testDb;
     @Mock
-    protected PersistenceProvider provider;
+    private PersistenceProvider provider;
     @Mock
-    protected EntityManagerFactory entityManagerFactory;
+    private EntityManagerFactory entityManagerFactory;
     @Mock
-    protected EntityManager entityManager;
+    private EntityManager entityManager;
     @Mock
-    protected RegionRecord region1;
+    private RegionRecord region1;
     @Mock
-    protected RegionRecord region2;
+    private RegionRecord region2;
     @Mock
-    protected AgentRecord agent1;
+    private AgentRecord agent1;
     @Mock
-    protected AgentRecord agent2;
+    private AgentRecord agent2;
     @Mock
-    protected PluginRecord plugin1;
+    private PluginRecord plugin1;
     @Mock
-    protected PluginRecord plugin2;
+    private PluginRecord plugin2;
+    @Mock
+    private Query mockedQuery;
 
-    protected final PersistenceUnitInfo puInfo = new PersistenceUnitInfoBuilder("test_pu","org.datanucleus.api.jpa.PersistenceProviderImpl").build();
+    private final PersistenceUnitInfo puInfo = new PersistenceUnitInfoBuilder("test_pu","org.datanucleus.api.jpa.PersistenceProviderImpl").build();
     @InjectMocks
     protected CoreDBImpl testDb = new CoreDBImpl(puInfo);
 
@@ -72,7 +75,7 @@ public class CoreDBImplTest {
     }
 
 
-    public Stream<Arguments> getProviderFromClassNameTest_genTestParams(){
+    private Stream<Arguments> getArgs_getProviderFromClassNameTest(){
         return Stream.of(
                 Arguments.of("does.not.exist",ReflectiveOperationException.class,"Class not found")
                 ,Arguments.of("javax.persistence.spi.PersistenceProvider",ReflectiveOperationException.class, "Instantiation exception")
@@ -82,9 +85,8 @@ public class CoreDBImplTest {
                 ,Arguments.of("DummyClasses.BadNullConstructor",ReflectiveOperationException.class,"Constructor throws exception")
         );
     }
-
     @ParameterizedTest
-    @MethodSource("getProviderFromClassNameTest_genTestParams")
+    @MethodSource("getArgs_getProviderFromClassNameTest")
     public void getProviderFromPUInfoTest(String providerClassName, Class<Throwable> underlyingException, String testDesc){
         Executable getProvider  = ()-> {
             CoreDBImpl d = new CoreDBImpl(new PersistenceUnitInfoBuilder("test_pu",providerClassName).build());
@@ -95,16 +97,72 @@ public class CoreDBImplTest {
         } else assertDoesNotThrow(getProvider);
     }
 
+
     @Test
     public void getRegionsTest(){
         Set<RegionRecord> expectedRegions = Stream.of(region1,region2).collect(Collectors.toSet());
-        Query mockedQuery = mock(Query.class);
         when(mockedQuery.getResultStream()).thenReturn(Stream.of(region1,region2));
         when(testDb.entityManager.createQuery(CoreDBImpl.REGION_QUERY_STRING)).thenReturn(mockedQuery);
         Set<RegionRecord> regionsReturned = testDb.getRegions().collect(Collectors.toSet());
         //remember: set A = set B iff A is subset of B and B is subset of A
         assertTrue(regionsReturned.containsAll(expectedRegions) && expectedRegions.containsAll(regionsReturned));
     }
+
+    @Test
+    public void getAgentsTest(){
+        Set<AgentRecord> expectedAgents = Stream.of(agent1,agent2).collect(Collectors.toSet());
+        when(mockedQuery.getResultStream()).thenReturn(Stream.of(agent1,agent2));
+        when(testDb.entityManager.createQuery(CoreDBImpl.AGENT_QUERY_STRING)).thenReturn(mockedQuery);
+        Set<AgentRecord> agentsReturned = testDb.getAgents().collect(Collectors.toSet());
+        assertTrue(agentsReturned.containsAll(expectedAgents) && expectedAgents.containsAll(agentsReturned));
+    }
+
+    @Test
+    public void getPluginsTest(){
+        Set<PluginRecord> expectedPlugins = Stream.of(plugin1,plugin2).collect(Collectors.toSet());
+        when(mockedQuery.getResultStream()).thenReturn(Stream.of(plugin1,plugin2));
+        when(testDb.entityManager.createQuery(CoreDBImpl.PLUGIN_QUERY_STRING)).thenReturn(mockedQuery);
+        Set<PluginRecord> pluginsReturned = testDb.getPlugins().collect(Collectors.toSet());
+        assertTrue(pluginsReturned.containsAll(expectedPlugins) && expectedPlugins.containsAll(pluginsReturned));
+    }
+
+    /*Less redundant but more complex version of the three methods above
+    public Stream<Arguments> supplyArgsToGetEntityTest() {
+         return Stream.of(
+                 Arguments.of("getRegions",CoreDBImpl.REGION_QUERY_STRING,Stream.of(region1,region2),RegionRecord.class),
+                 Arguments.of("getAgents",CoreDBImpl.AGENT_QUERY_STRING,Stream.of(agent1,agent2),AgentRecord.class),
+                 Arguments.of("getPlugins",CoreDBImpl.PLUGIN_QUERY_STRING,Stream.of(plugin1,plugin2),PluginRecord.class)
+         );
+    }
+    @ParameterizedTest
+    @MethodSource("supplyArgsToGetEntityTest")
+    public void getEntityTest(String methodToCall, String queryString, Stream expectedEntities, Class elementReturnType)
+    throws ReflectiveOperationException {
+        Set expectedEntitySet = new HashSet();
+        expectedEntities.forEach(expectedEntitySet::add);
+
+        when(mockedQuery.getResultStream()).thenReturn(expectedEntitySet.stream());
+        when(testDb.entityManager.createQuery(queryString)).thenReturn(mockedQuery);
+        Stream<?> res = (Stream) testDb.getClass().getMethod(methodToCall,null).invoke(testDb,null);
+        Set actualEntitiesReturned = new HashSet();
+        res.forEach(actualEntitiesReturned::add);
+
+        assertTrue(actualEntitiesReturned.containsAll(expectedEntitySet) && expectedEntitySet.containsAll(actualEntitiesReturned));
+    }
+    */
+
+    private Stream<Arguments> getArgs_getAgentsInRegionTest(){
+        return Stream.of(
+                Arguments.of("region1",Stream.of(agent1)),
+                Arguments.of("region2",Stream.of(agent2))
+        );
+    }
+    @ParameterizedTest
+    @MethodSource("getArgs_getAgentsInRegionTest")
+    public void getAgentsInRegionTest(String regionName, Stream<AgentRecord> expectedAgents) {
+
+    }
+
 
 
 

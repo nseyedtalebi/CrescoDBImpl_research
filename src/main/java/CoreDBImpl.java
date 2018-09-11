@@ -1,5 +1,8 @@
+import io.cresco.library.db.AgentRecord;
+import io.cresco.library.db.PluginRecord;
 import io.cresco.library.db.RegionRecord;
 import io.cresco.library.utilities.CLogger;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
@@ -80,10 +83,57 @@ public class CoreDBImpl {
         this.persistenceUnitInfo = persistenceUnitInfo;
     }
 
-    public static final String REGION_QUERY_STRING = "SELECT r FROM RegionRecord r";
+    protected static final String REGION_QUERY_STRING = "SELECT r FROM RegionRecord r";
+    public Stream<RegionRecord> getRegions(){
+        try {
+            return entityManager.createQuery(REGION_QUERY_STRING).getResultStream();
+        } catch(ClassCastException ex){
+            logger.error(ex.getMessage());
+            logger.error(ExceptionUtils.getStackTrace(ex));
+            throw new ClassCastException("Could not cast untyped Stream to Stream<RegionRecord>. " +
+                    "Perhaps something related to persistence is misconfigured?");
+        }
+    }
 
-    Stream<RegionRecord> getRegions(){
-        return entityManager.createQuery(REGION_QUERY_STRING).getResultStream();
+    protected static final String AGENT_QUERY_STRING = "SELECT a FROM AgentRecord a";
+    public Stream<AgentRecord> getAgents(){
+        try {
+            return (Stream<AgentRecord>) entityManager.createQuery(AGENT_QUERY_STRING).getResultStream();
+        }
+        catch(ClassCastException ex){
+            logger.error(ex.getMessage());
+            logger.error(ExceptionUtils.getStackTrace(ex));
+            throw new ClassCastException("Could not cast untyped Stream to Stream<AgentRecord>. " +
+                    "Perhaps something related to persistence is misconfigured?");
+        }
+    }
+
+    protected static final String PLUGIN_QUERY_STRING = "SELECT p FROM PluginRecord p";
+    public Stream<PluginRecord> getPlugins(){
+        try {
+            return (Stream<PluginRecord>) entityManager.createQuery(PLUGIN_QUERY_STRING).getResultStream();
+        }catch(ClassCastException ex){
+            logger.error(ex.getMessage());
+            logger.error(ExceptionUtils.getStackTrace(ex));
+            throw new ClassCastException("Could not cast untyped Stream to Stream<PluginRecord>". " +
+                    "Perhaps something related to persistence is misconfigured?");
+        }
+
+    }
+
+    /*NMS I wonder if it's faster to run more very specific DB queries that return exactly what we want or
+    to run fewer DB queries and manipulate the resultsets? Either way I can provide the methods and decide
+    which ones to use later*/
+    protected static final String AGENTS_IN_REGION_QUERY_STRING = "SELECT a FROM AgentRecord a JOIN a.region r WHERE r.name = :rName";
+    public Stream<AgentRecord> getAgentsInRegion(String regionName){
+        try {
+            return entityManager.createQuery(AGENTS_IN_REGION_QUERY_STRING).setParameter("rName", regionName).getResultStream();
+        }catch(ClassCastException ex){
+            logger.error(ex.getMessage());
+            logger.error(ExceptionUtils.getStackTrace(ex));
+            throw new ClassCastException("Could not cast untyped Stream to . " +
+                    "Perhaps something related to persistence is misconfigured?");
+        }
     }
 
 
