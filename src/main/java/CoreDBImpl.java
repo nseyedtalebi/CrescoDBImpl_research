@@ -1,18 +1,21 @@
+import io.cresco.library.db.RegionRecord;
 import io.cresco.library.utilities.CLogger;
 
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
+import javax.persistence.Query;
 import javax.persistence.spi.PersistenceProvider;
 import javax.persistence.spi.PersistenceUnitInfo;
 import java.lang.reflect.Constructor;
 import java.util.Map;
 import java.util.Properties;
+import java.util.stream.Stream;
 
 public class CoreDBImpl {
-
     //The following should be the same as what's specified in persistence.xml
     public static final String DEFAULT_PERSISTENCE_UNIT_NAME = "io.cresco.controller";
     protected static final CLogger logger = new CLogger("CoreDBImpl", CLogger.Level.None);
+
 
     protected EntityManagerFactory entityManagerFactory;
     protected EntityManager entityManager;
@@ -25,16 +28,20 @@ public class CoreDBImpl {
     public static CoreDBImpl getInstance(PersistenceUnitInfo puInfo
             ,Map persistenceUnitProps, Map entityManagerProps)
             throws ReflectiveOperationException{
-        String persistenceClassName = puInfo.getPersistenceProviderClassName();
-        PersistenceProvider persistenceProvider = getProviderFromClassName(persistenceClassName);
-        EntityManagerFactory emf = getEMFactoryFromProvider(puInfo
-                ,persistenceProvider,persistenceUnitProps);
-        EntityManager em = emf.createEntityManager(entityManagerProps);
-        return new CoreDBImpl(puInfo,em,emf,persistenceProvider);
+        CoreDBImpl newInstance = new CoreDBImpl(puInfo);
+        newInstance.provider = newInstance.getProviderFromPUInfo();
+        newInstance.entityManagerFactory = newInstance.provider
+                .createContainerEntityManagerFactory(
+                        newInstance.persistenceUnitInfo,persistenceUnitProps
+                );
+        newInstance.entityManager =  newInstance.entityManagerFactory
+                .createEntityManager(entityManagerProps);
+        return newInstance;
     }
 
-    protected static PersistenceProvider getProviderFromClassName(String persistenceClassName)
+    protected PersistenceProvider getProviderFromPUInfo()
             throws ReflectiveOperationException{
+        String persistenceClassName = this.persistenceUnitInfo.getPersistenceProviderClassName();
         Class providerClass;
         Constructor providerConstructor;
         try {
@@ -67,16 +74,16 @@ public class CoreDBImpl {
                 persistenceUnitInfo, persistenceUnitProps);
     }
 
-    protected CoreDBImpl(PersistenceUnitInfo persistenceUnitInfo
-    ,EntityManager entityManager
-    ,EntityManagerFactory entityManagerFactory
-    ,PersistenceProvider provider){
-        this.entityManagerFactory = entityManagerFactory;
-        this.entityManager = entityManager;
+    protected CoreDBImpl(PersistenceUnitInfo persistenceUnitInfo){
         this.persistenceUnitName = persistenceUnitInfo.getPersistenceUnitName();
         this.persistenceUnitProperties = persistenceUnitInfo.getProperties();
-        this.provider = provider;
         this.persistenceUnitInfo = persistenceUnitInfo;
+    }
+
+    public static final String REGION_QUERY_STRING = "SELECT r FROM RegionRecord r";
+
+    Stream<RegionRecord> getRegions(){
+        return entityManager.createQuery(REGION_QUERY_STRING).getResultStream();
     }
 
 
