@@ -1,8 +1,7 @@
-package io.cresco.library.db;
-
 import javax.persistence.*;
 import java.util.HashMap;
 import java.util.Map;
+
 
 @Entity
 @Table(name="agent"

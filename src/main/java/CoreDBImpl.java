@@ -1,12 +1,8 @@
-import io.cresco.library.db.AgentRecord;
-import io.cresco.library.db.PluginRecord;
-import io.cresco.library.db.RegionRecord;
 import io.cresco.library.utilities.CLogger;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
-import javax.persistence.Query;
 import javax.persistence.spi.PersistenceProvider;
 import javax.persistence.spi.PersistenceUnitInfo;
 import java.lang.reflect.Constructor;
@@ -58,14 +54,14 @@ public class CoreDBImpl {
         } catch(ReflectiveOperationException ex){
             String msg = String.format("Could not get constructor for persistence provider %s: %s",persistenceClassName,ex.getMessage());
             logger.error(msg);
-            throw new ReflectiveOperationException(msg,ex.getCause());
+            throw new ReflectiveOperationException(msg,ex);
         }
         try {
             return (PersistenceProvider) providerConstructor.newInstance();
         } catch(ReflectiveOperationException ex){
             String msg = String.format("Could not get instance of persistence provider %s: %s",persistenceClassName,ex.getMessage());
             logger.error(msg);
-            throw new ReflectiveOperationException(msg,ex.getCause());
+            throw new ReflectiveOperationException(msg,ex);
         }
     }
 
@@ -83,15 +79,22 @@ public class CoreDBImpl {
         this.persistenceUnitInfo = persistenceUnitInfo;
     }
 
+    protected ClassCastException handleStreamClassCastEx(ClassCastException ex, String targetType){
+        if(ex == null) throw new IllegalArgumentException(
+                "Parameter 'ex' for handleStreamClassCastEx() cannot be null");
+        if(targetType == null) targetType="";
+        logger.error(ex.getMessage());
+        logger.error(ExceptionUtils.getStackTrace(ex));
+        return new ClassCastException("Could not cast untyped Stream to " + targetType +
+                ". Perhaps something related to persistence is misconfigured?");
+    }
+
     protected static final String REGION_QUERY_STRING = "SELECT r FROM RegionRecord r";
     public Stream<RegionRecord> getRegions(){
         try {
             return entityManager.createQuery(REGION_QUERY_STRING).getResultStream();
         } catch(ClassCastException ex){
-            logger.error(ex.getMessage());
-            logger.error(ExceptionUtils.getStackTrace(ex));
-            throw new ClassCastException("Could not cast untyped Stream to Stream<RegionRecord>. " +
-                    "Perhaps something related to persistence is misconfigured?");
+            throw handleStreamClassCastEx(ex,"Stream<AgentRecord>");
         }
     }
 
@@ -101,10 +104,7 @@ public class CoreDBImpl {
             return (Stream<AgentRecord>) entityManager.createQuery(AGENT_QUERY_STRING).getResultStream();
         }
         catch(ClassCastException ex){
-            logger.error(ex.getMessage());
-            logger.error(ExceptionUtils.getStackTrace(ex));
-            throw new ClassCastException("Could not cast untyped Stream to Stream<AgentRecord>. " +
-                    "Perhaps something related to persistence is misconfigured?");
+           throw handleStreamClassCastEx(ex,"Stream<AgentRecord>");
         }
     }
 
@@ -113,10 +113,7 @@ public class CoreDBImpl {
         try {
             return (Stream<PluginRecord>) entityManager.createQuery(PLUGIN_QUERY_STRING).getResultStream();
         }catch(ClassCastException ex){
-            logger.error(ex.getMessage());
-            logger.error(ExceptionUtils.getStackTrace(ex));
-            throw new ClassCastException("Could not cast untyped Stream to Stream<PluginRecord>". " +
-                    "Perhaps something related to persistence is misconfigured?");
+            throw handleStreamClassCastEx(ex,"Stream<PluginRecord>");
         }
 
     }
@@ -124,17 +121,28 @@ public class CoreDBImpl {
     /*NMS I wonder if it's faster to run more very specific DB queries that return exactly what we want or
     to run fewer DB queries and manipulate the resultsets? Either way I can provide the methods and decide
     which ones to use later*/
-    protected static final String AGENTS_IN_REGION_QUERY_STRING = "SELECT a FROM AgentRecord a JOIN a.region r WHERE r.name = :rName";
+    protected static final String QRY_AGENTS_IN_REGION = "SELECT a FROM AgentRecord a JOIN a.region r WHERE r.name = :rName";
     public Stream<AgentRecord> getAgentsInRegion(String regionName){
+        if(regionName == null){
+            throw new IllegalArgumentException("Argument to getAgentsInRegion(String) cannot be null");
+        }
         try {
-            return entityManager.createQuery(AGENTS_IN_REGION_QUERY_STRING).setParameter("rName", regionName).getResultStream();
+            return entityManager.createQuery(QRY_AGENTS_IN_REGION).setParameter("rName", regionName).getResultStream();
         }catch(ClassCastException ex){
-            logger.error(ex.getMessage());
-            logger.error(ExceptionUtils.getStackTrace(ex));
-            throw new ClassCastException("Could not cast untyped Stream to . " +
-                    "Perhaps something related to persistence is misconfigured?");
+            throw handleStreamClassCastEx(ex,"Stream<AgentRecord>");
         }
     }
 
+    protected static final String QRY_PLUGINS_IN_AGENT = "SELECT p FROM PluginRecord p JOIN p.agent a WHERE a.name = :aName";
+    public Stream<PluginRecord> getPluginsInAgent(String agentName){
+        if(agentName == null){
+            throw new IllegalArgumentException("Argument to getPluginsInAgent(String) cannot be null");
+        }
+        try{
+            return entityManager.createQuery(QRY_PLUGINS_IN_AGENT).setParameter("aName",agentName).getResultStream();
+        } catch(ClassCastException ex){
+            throw handleStreamClassCastEx(ex, "Stream<PluginRecord>");
+        }
+    }
 
 }
