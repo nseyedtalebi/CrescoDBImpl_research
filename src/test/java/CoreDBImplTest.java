@@ -73,7 +73,8 @@ public class CoreDBImplTest {
          return Stream.of(
                  Arguments.of("getRegions",CoreDBImpl.REGION_QUERY_STRING),
                  Arguments.of("getAgents",CoreDBImpl.AGENT_QUERY_STRING),
-                 Arguments.of("getPlugins",CoreDBImpl.PLUGIN_QUERY_STRING)
+                 Arguments.of("getPlugins",CoreDBImpl.PLUGIN_QUERY_STRING),
+                 Arguments.of("getRegionsWithAgentCounts",CoreDBImpl.QRY_DBINTERFACE_GETREGIONLIST)
          );
     }
     @ParameterizedTest
@@ -105,5 +106,7 @@ public class CoreDBImplTest {
         verify(mockedQuery).getResultStream();
         verify(mockedQuery).setParameter(eq(expectedQueryParam), any());
     }
+
+
 
  }

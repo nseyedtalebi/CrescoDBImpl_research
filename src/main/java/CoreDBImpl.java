@@ -145,4 +145,8 @@ public class CoreDBImpl {
         }
     }
 
+    protected static final String QRY_DBINTERFACE_GETREGIONLIST = "SELECT r,COUNT(a) FROM AgentRecord a JOIN a.region r GROUP BY r";
+    public Stream getRegionsWithAgentCounts(){
+        return entityManager.createQuery(QRY_DBINTERFACE_GETREGIONLIST).getResultStream();
+    }
 }
