@@ -1,8 +1,10 @@
+package db;
+
+import db.jpa.entities.AgentRecord;
+import db.jpa.entities.PluginRecord;
+import db.jpa.entities.RegionRecord;
 import io.cresco.library.utilities.CLogger;
 import org.apache.commons.lang3.exception.ExceptionUtils;
-import jpa.entities.AgentRecord;
-import jpa.entities.PluginRecord;
-import jpa.entities.RegionRecord;
 
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
@@ -144,4 +146,11 @@ public class CoreDBImpl {
     public Stream<Object[]>getAgentList(){
         return entityManager.createQuery(QRY_DBINTERFACE_GETAGENTLIST, Object[].class).getResultStream();
     }
+
+    protected static final String QRY_DBINTERFACE_GETPLUGINLIST = "SELECT p FROM PluginRecord p";
+    public Stream<Object[]>getPluginList(){
+        return entityManager.createQuery(QRY_DBINTERFACE_GETPLUGINLIST, Object[].class).getResultStream();
+    }
+
+
 }

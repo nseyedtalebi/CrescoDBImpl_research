@@ -1,4 +1,4 @@
-package queryresults;
+package db.jpa.queryresults;
 
 import java.util.List;
 

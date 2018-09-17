@@ -1,4 +1,4 @@
-package DummyClasses;
+package db.DummyClasses;
 
 public class PrivateConstructor {
     private PrivateConstructor(){}

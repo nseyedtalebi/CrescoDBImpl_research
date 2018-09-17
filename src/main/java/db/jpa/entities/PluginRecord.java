@@ -1,4 +1,6 @@
-package jpa.entities;
+package db.jpa.entities;
+
+import db.NodeStatusType;
 
 import javax.persistence.*;
 import java.util.HashMap;
@@ -22,11 +24,18 @@ public class PluginRecord {
     @JoinColumn(name="region_id")
     private RegionRecord region;
 
-    @Column(name="plugin_name")
-    private String name;
+    @Column(name="pluginname")
+    private String pluginname;
+
+    @Column(name="agentcontroller")
+    private String agentcontroller;
 
     @ElementCollection(fetch = FetchType.LAZY)
     private Map<String,String> recordParams = new HashMap<>();
+
+
+    @Column(name="plugin_status")
+    private NodeStatusType status;
 
 
     protected PluginRecord(){}
@@ -51,12 +60,12 @@ public class PluginRecord {
         this.region = region;
     }
 
-    public String getName() {
-        return name;
+    public String getPluginname() {
+        return pluginname;
     }
 
-    public void setName(String name) {
-        this.name = name;
+    public void setPluginname(String name) {
+        this.pluginname = name;
     }
 
     public Map<String, String> getRecordParams() {
@@ -66,4 +75,22 @@ public class PluginRecord {
     public void setRecordParams(Map<String, String> recordParams) {
         this.recordParams = recordParams;
     }
+
+    public String getAgentcontroller() {
+        return agentcontroller;
+    }
+
+
+    public void setAgentcontroller(String agentcontroller) {
+        this.agentcontroller = agentcontroller;
+    }
+
+    public NodeStatusType getStatus() {
+        return status;
+    }
+
+    public void setStatus(NodeStatusType status) {
+        this.status = status;
+    }
+
 }

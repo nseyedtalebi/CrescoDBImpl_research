@@ -1,7 +1,7 @@
-import jpa.PersistenceUnitInfoBuilder;
-import jpa.entities.AgentRecord;
-import jpa.entities.PluginRecord;
-import jpa.entities.RegionRecord;
+package db;
+
+import db.CoreDBImpl;
+import db.jpa.PersistenceUnitInfoBuilder;
 import org.junit.jupiter.api.*;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -16,7 +16,6 @@ import java.util.*;
 import java.util.stream.Stream;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
-import javax.persistence.Query;
 import javax.persistence.TypedQuery;
 import javax.persistence.spi.PersistenceProvider;
 import javax.persistence.spi.PersistenceUnitInfo;
@@ -24,8 +23,6 @@ import javax.persistence.spi.PersistenceUnitInfo;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
-import queryresults.AgentListResult;
-import queryresults.RegionListResult;
 
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -60,8 +57,8 @@ public class CoreDBImplTest {
     private Stream<Arguments> getArgs_getProviderFromClassNameTest(){
         return Stream.of(
                 Arguments.of("does.not.exist",ClassNotFoundException.class,"Class not found")
-                ,Arguments.of("DummyClasses.WrongConstructor",NoSuchMethodException.class,"No such method exception")
-                ,Arguments.of("DummyClasses.BadNullConstructor",
+                ,Arguments.of("db.DummyClasses.WrongConstructor",NoSuchMethodException.class,"No such method exception")
+                ,Arguments.of("db.DummyClasses.BadNullConstructor",
                         InvocationTargetException.class,"Constructor throws exception")
         );
     }

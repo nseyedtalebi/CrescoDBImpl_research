@@ -1,33 +1,32 @@
-package jpa.entities;
+package db.jpa.entities;
+
+import db.NodeStatusType;
 
 import javax.persistence.*;
 import java.util.HashMap;
 import java.util.Map;
 
-
 @Entity
-@Table(name="agent"
-        ,uniqueConstraints = {@UniqueConstraint(columnNames={"agent_name"})})
-public class AgentRecord {
-
+@Table(name="region"
+        ,uniqueConstraints = {@UniqueConstraint(columnNames={"region_name"})})
+public class RegionRecord {
     @Id
     @GeneratedValue
-    private long id;
+    private Long id;
 
-    @Column(name="agent_name")
+    @Column(name="region_name")
     private String name;
-
-    @ManyToOne(cascade = CascadeType.ALL)
-    @JoinColumn(name="region_id")
-    private RegionRecord region;
 
     @ElementCollection(fetch = FetchType.LAZY)
     private Map<String,String> recordParams = new HashMap<>();
 
-    protected AgentRecord() {
-    }
+    @Column(name="region_status")
+    private NodeStatusType status;
 
-    public long getId() {
+    protected RegionRecord(){}
+
+
+    public Long getId() {
         return id;
     }
 
@@ -39,14 +38,6 @@ public class AgentRecord {
         this.name = name;
     }
 
-    public RegionRecord getRegion() {
-        return region;
-    }
-
-    public void setRegion(RegionRecord region) {
-        this.region = region;
-    }
-
     public Map<String, String> getRecordParams() {
         return recordParams;
     }
@@ -54,4 +45,6 @@ public class AgentRecord {
     public void setRecordParams(Map<String, String> recordParams) {
         this.recordParams = recordParams;
     }
+
+
 }

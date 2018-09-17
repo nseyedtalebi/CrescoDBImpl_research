@@ -1,4 +1,4 @@
-package DummyClasses;
+package db.DummyClasses;
 
 import java.nio.charset.CharacterCodingException;
 

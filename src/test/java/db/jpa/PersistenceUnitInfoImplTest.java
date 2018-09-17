@@ -1,4 +1,4 @@
-package jpa;
+package db.jpa;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -157,9 +157,9 @@ public class PersistenceUnitInfoImplTest {
     }
 
     Stream<String> getJPAProviderClasses(){
-        return Stream.of("org.hibernate.jpa.HibernatePersistenceProvider"
-                ,"org.eclipse.persistence.jpa.PersistenceProvider"
-                ,"org.datanucleus.api.jpa.PersistenceProviderImpl");
+        return Stream.of("org.hibernate.db.jpa.HibernatePersistenceProvider"
+                ,"org.eclipse.persistence.db.jpa.PersistenceProvider"
+                ,"org.datanucleus.api.db.jpa.PersistenceProviderImpl");
     }
 
     @TestFactory

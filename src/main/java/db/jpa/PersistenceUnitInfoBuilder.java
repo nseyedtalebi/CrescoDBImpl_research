@@ -1,4 +1,4 @@
-package jpa;
+package db.jpa;
 
 import javax.persistence.SharedCacheMode;
 import javax.persistence.ValidationMode;
