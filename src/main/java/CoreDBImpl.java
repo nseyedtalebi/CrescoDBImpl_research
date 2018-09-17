@@ -1,5 +1,8 @@
 import io.cresco.library.utilities.CLogger;
 import org.apache.commons.lang3.exception.ExceptionUtils;
+import jpa.entities.AgentRecord;
+import jpa.entities.PluginRecord;
+import jpa.entities.RegionRecord;
 
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
@@ -79,6 +82,10 @@ public class CoreDBImpl {
         this.persistenceUnitInfo = persistenceUnitInfo;
     }
 
+    /*No way around casting the results, but doing it explicitly should help troubleshoot later
+     As it's a runtime error and directly touches stuff outside of my code, I will need to make sure
+     the casts work as expected in the integration tests.
+     */
     protected ClassCastException handleStreamClassCastEx(ClassCastException ex, String targetType){
         if(ex == null) throw new IllegalArgumentException(
                 "Parameter 'ex' for handleStreamClassCastEx() cannot be null");
@@ -86,36 +93,23 @@ public class CoreDBImpl {
         logger.error(ex.getMessage());
         logger.error(ExceptionUtils.getStackTrace(ex));
         return new ClassCastException("Could not cast untyped Stream to " + targetType +
-                ". Perhaps something related to persistence is misconfigured?");
+                ". Does the return type of the method match the types in the JPQL query?");
     }
 
     protected static final String REGION_QUERY_STRING = "SELECT r FROM RegionRecord r";
     public Stream<RegionRecord> getRegions(){
-        try {
-            return entityManager.createQuery(REGION_QUERY_STRING).getResultStream();
-        } catch(ClassCastException ex){
-            throw handleStreamClassCastEx(ex,"Stream<AgentRecord>");
-        }
+            return entityManager.createQuery(REGION_QUERY_STRING,RegionRecord.class).getResultStream();
     }
 
     protected static final String AGENT_QUERY_STRING = "SELECT a FROM AgentRecord a";
     public Stream<AgentRecord> getAgents(){
-        try {
-            return (Stream<AgentRecord>) entityManager.createQuery(AGENT_QUERY_STRING).getResultStream();
-        }
-        catch(ClassCastException ex){
-           throw handleStreamClassCastEx(ex,"Stream<AgentRecord>");
-        }
+            return entityManager.createQuery(AGENT_QUERY_STRING,AgentRecord.class).getResultStream();
+
     }
 
     protected static final String PLUGIN_QUERY_STRING = "SELECT p FROM PluginRecord p";
     public Stream<PluginRecord> getPlugins(){
-        try {
-            return (Stream<PluginRecord>) entityManager.createQuery(PLUGIN_QUERY_STRING).getResultStream();
-        }catch(ClassCastException ex){
-            throw handleStreamClassCastEx(ex,"Stream<PluginRecord>");
-        }
-
+        return entityManager.createQuery(PLUGIN_QUERY_STRING,PluginRecord.class).getResultStream();
     }
 
     /*NMS I wonder if it's faster to run more very specific DB queries that return exactly what we want or
@@ -126,11 +120,7 @@ public class CoreDBImpl {
         if(regionName == null){
             throw new IllegalArgumentException("Argument to getAgentsInRegion(String) cannot be null");
         }
-        try {
-            return entityManager.createQuery(QRY_AGENTS_IN_REGION).setParameter("rName", regionName).getResultStream();
-        }catch(ClassCastException ex){
-            throw handleStreamClassCastEx(ex,"Stream<AgentRecord>");
-        }
+            return entityManager.createQuery(QRY_AGENTS_IN_REGION,AgentRecord.class).setParameter("rName", regionName).getResultStream();
     }
 
     protected static final String QRY_PLUGINS_IN_AGENT = "SELECT p FROM PluginRecord p JOIN p.agent a WHERE a.name = :aName";
@@ -138,15 +128,20 @@ public class CoreDBImpl {
         if(agentName == null){
             throw new IllegalArgumentException("Argument to getPluginsInAgent(String) cannot be null");
         }
-        try{
-            return entityManager.createQuery(QRY_PLUGINS_IN_AGENT).setParameter("aName",agentName).getResultStream();
-        } catch(ClassCastException ex){
-            throw handleStreamClassCastEx(ex, "Stream<PluginRecord>");
-        }
+            return (Stream<PluginRecord>) entityManager
+                    .createQuery(QRY_PLUGINS_IN_AGENT,PluginRecord.class)
+                    .setParameter("aName",agentName)
+                    .getResultStream();
     }
 
-    protected static final String QRY_DBINTERFACE_GETREGIONLIST = "SELECT r,COUNT(a) FROM AgentRecord a JOIN a.region r GROUP BY r";
-    public Stream getRegionsWithAgentCounts(){
-        return entityManager.createQuery(QRY_DBINTERFACE_GETREGIONLIST).getResultStream();
+    protected static final String QRY_DBINTERFACE_GETREGIONLIST = "SELECT r.name,COUNT(a) FROM AgentRecord a JOIN a.region r GROUP BY r";
+    public Stream<Object[]> getRegionList(){
+        //NMS it may not actually return a tuple. If so, try Stream<Object[]>
+            return entityManager.createQuery(QRY_DBINTERFACE_GETREGIONLIST, Object[].class).getResultStream();
+    }
+
+    protected static final String QRY_DBINTERFACE_GETAGENTLIST = "SELECT a, COUNT(p) FROM PluginRecord p JOIN p.agent a GROUP BY a";
+    public Stream<Object[]>getAgentList(){
+        return entityManager.createQuery(QRY_DBINTERFACE_GETAGENTLIST, Object[].class).getResultStream();
     }
 }

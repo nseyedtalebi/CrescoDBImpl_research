@@ -1,3 +1,5 @@
+package jpa.entities;
+
 import javax.persistence.*;
 import java.util.HashMap;
 import java.util.Map;
@@ -15,12 +17,11 @@ public class AgentRecord {
     @Column(name="agent_name")
     private String name;
 
-
-    @ManyToOne
+    @ManyToOne(cascade = CascadeType.ALL)
     @JoinColumn(name="region_id")
     private RegionRecord region;
 
-    @ElementCollection
+    @ElementCollection(fetch = FetchType.LAZY)
     private Map<String,String> recordParams = new HashMap<>();
 
     protected AgentRecord() {

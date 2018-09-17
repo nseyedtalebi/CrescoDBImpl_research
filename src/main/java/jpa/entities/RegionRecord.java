@@ -1,3 +1,5 @@
+package jpa.entities;
+
 import javax.persistence.*;
 import java.util.HashMap;
 import java.util.Map;
@@ -13,10 +15,12 @@ public class RegionRecord {
     @Column(name="region_name")
     private String name;
 
-    @ElementCollection
+    @ElementCollection(fetch = FetchType.LAZY)
     private Map<String,String> recordParams = new HashMap<>();
 
+
     protected RegionRecord(){}
+
 
     public Long getId() {
         return id;
@@ -37,4 +41,6 @@ public class RegionRecord {
     public void setRecordParams(Map<String, String> recordParams) {
         this.recordParams = recordParams;
     }
+
+
 }

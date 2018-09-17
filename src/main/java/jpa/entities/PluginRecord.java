@@ -1,3 +1,5 @@
+package jpa.entities;
+
 import javax.persistence.*;
 import java.util.HashMap;
 import java.util.Map;
@@ -16,14 +18,14 @@ public class PluginRecord {
     @JoinColumn(name="agent_id")
     private AgentRecord agent;
 
-    @ManyToOne
+    @ManyToOne(cascade = CascadeType.ALL)
     @JoinColumn(name="region_id")
     private RegionRecord region;
 
     @Column(name="plugin_name")
     private String name;
 
-    @ElementCollection
+    @ElementCollection(fetch = FetchType.LAZY)
     private Map<String,String> recordParams = new HashMap<>();
 
 

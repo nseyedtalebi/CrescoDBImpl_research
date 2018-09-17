@@ -1,5 +1,4 @@
-package jpastuff;
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
+package jpa;
 
 import javax.persistence.SharedCacheMode;
 import javax.persistence.ValidationMode;

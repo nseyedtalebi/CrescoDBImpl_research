@@ -1,4 +1,7 @@
-import jpastuff.PersistenceUnitInfoBuilder;
+import jpa.PersistenceUnitInfoBuilder;
+import jpa.entities.AgentRecord;
+import jpa.entities.PluginRecord;
+import jpa.entities.RegionRecord;
 import org.junit.jupiter.api.*;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -14,12 +17,15 @@ import java.util.stream.Stream;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.Query;
+import javax.persistence.TypedQuery;
 import javax.persistence.spi.PersistenceProvider;
 import javax.persistence.spi.PersistenceUnitInfo;
 
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import queryresults.AgentListResult;
+import queryresults.RegionListResult;
 
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -34,8 +40,9 @@ public class CoreDBImplTest {
     private EntityManagerFactory entityManagerFactory;
     @Mock
     private EntityManager entityManager;
+
     @Mock
-    private Query mockedQuery;
+    private TypedQuery mockedQuery;
 
 
     @InjectMocks
@@ -74,15 +81,16 @@ public class CoreDBImplTest {
                  Arguments.of("getRegions",CoreDBImpl.REGION_QUERY_STRING),
                  Arguments.of("getAgents",CoreDBImpl.AGENT_QUERY_STRING),
                  Arguments.of("getPlugins",CoreDBImpl.PLUGIN_QUERY_STRING),
-                 Arguments.of("getRegionsWithAgentCounts",CoreDBImpl.QRY_DBINTERFACE_GETREGIONLIST)
+                 Arguments.of("getRegionList",CoreDBImpl.QRY_DBINTERFACE_GETREGIONLIST),
+                 Arguments.of("getAgentList",CoreDBImpl.QRY_DBINTERFACE_GETAGENTLIST)
          );
     }
     @ParameterizedTest
     @MethodSource("supplyArgsToGetEntityTest")
-    public void getEntityTest(String methodToCall, String queryString)
+    public void getEntityTest(String methodToCall, String queryString, Class resultType)
     throws ReflectiveOperationException {
         when(mockedQuery.getResultStream()).thenReturn(Stream.empty());
-        when(testDb.entityManager.createQuery(queryString)).thenReturn(mockedQuery);
+        when(testDb.entityManager.createQuery(eq(queryString),any(Class.class))).thenReturn(mockedQuery);
         testDb.getClass().getMethod(methodToCall,null).invoke(testDb,null);
         verify(mockedQuery).getResultStream();
     }
@@ -101,7 +109,7 @@ public class CoreDBImplTest {
     ) throws ReflectiveOperationException {
         when(mockedQuery.getResultStream()).thenReturn(Stream.empty());
         when(mockedQuery.setParameter(eq(expectedQueryParam), any())).thenReturn(mockedQuery);
-        when(testDb.entityManager.createQuery(queryString)).thenReturn(mockedQuery);
+        when(testDb.entityManager.createQuery(eq(queryString),any(Class.class))).thenReturn(mockedQuery);
         testDb.getClass().getMethod(methodName,String.class).invoke(testDb,"");
         verify(mockedQuery).getResultStream();
         verify(mockedQuery).setParameter(eq(expectedQueryParam), any());
