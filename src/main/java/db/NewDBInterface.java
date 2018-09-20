@@ -96,21 +96,29 @@ public class NewDBInterface {
     }
 
     public PluginListResult getPluginList(){
-        Stream<Object[]>results = db.getPluginList();
-        return new PluginListResult(results.map(object -> {
-            PluginRecord plugin = (PluginRecord) object[0];
-            return new PluginListResult.ListEntry(plugin.getPluginname(),plugin.getRegion().getName(),plugin.getAgent().getName());
-        }).collect(Collectors.toList()));
+        Stream<PluginRecord>results = db.getPlugins();
+        return new PluginListResult(
+                results.map(plugin ->
+                    new PluginListResult.ListEntry(plugin.getPluginname(),
+                            plugin.getRegion().getName(),
+                            plugin.getAgent().getName()
+                    )
+                ).collect(Collectors.toList()));
     }
 
     public PluginListByTypeResult getPluginListByType() {
-        Stream<Object[]> results = db.getPluginList();
-        return new PluginListByTypeResult(results.map(object -> {
-            PluginRecord plugin = (PluginRecord) object[0];
-            return new PluginListByTypeResult.ListEntry(plugin.getAgentcontroller(), plugin.getRegion().getName(), plugin.getAgent().getName(), plugin.getRecordParams());
-        }).collect(Collectors.toList()));
+        Stream<PluginRecord>results = db.getPlugins();
+        return new PluginListByTypeResult(
+                results.map(plugin ->
+                    new PluginListByTypeResult.ListEntry(plugin.getAgentcontroller(),
+                            plugin.getRegion().getName(),
+                            plugin.getAgent().getName(),
+                            plugin.getRecordParams()
+                    )
+                ).collect(Collectors.toList()));
     }
 
+    //TODO: The two methods below will need to be reworked. The structure of PluginListRepoInventoryResult does not match what is returned by the current implementation
     public PluginListRepoInventoryResult getPluginListRepoInventory(){
         return new PluginListRepoInventoryResult(
                 getPluginListByType().getPlugins().stream().map(listEntry -> {
@@ -123,6 +131,13 @@ public class NewDBInterface {
                    return response.getCompressedParam("repolist");
                 }).collect(Collectors.toList())
         );
+    }
+
+    public PluginListRepoSetResult getPluginListRepoSet(){
+
+        return new PluginListRepoSetResult(
+                db.getPlugins().map(pluginRecord -> )
+        )
     }
 
    /*NMS

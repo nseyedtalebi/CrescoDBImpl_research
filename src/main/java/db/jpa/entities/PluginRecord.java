@@ -30,6 +30,15 @@ public class PluginRecord {
     @Column(name="agentcontroller")
     private String agentcontroller;
 
+    @Column(name="jarfile")
+    private String jarfile;
+
+    @Column(name="md5")
+    private String md5;
+
+    @Column(name="plugin_version")
+    private String version;
+
     @ElementCollection(fetch = FetchType.LAZY)
     private Map<String,String> recordParams = new HashMap<>();
 

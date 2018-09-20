@@ -147,10 +147,10 @@ public class CoreDBImpl {
         return entityManager.createQuery(QRY_DBINTERFACE_GETAGENTLIST, Object[].class).getResultStream();
     }
 
-    protected static final String QRY_DBINTERFACE_GETPLUGINLIST = "SELECT p FROM PluginRecord p";
+    /*protected static final String QRY_DBINTERFACE_GETPLUGINLIST = "SELECT p FROM PluginRecord p";
     public Stream<Object[]>getPluginList(){
         return entityManager.createQuery(QRY_DBINTERFACE_GETPLUGINLIST, Object[].class).getResultStream();
-    }
+    }*/
 
 
 }
